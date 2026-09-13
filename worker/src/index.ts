@@ -74,7 +74,7 @@ const app = new Hono<{ Bindings: Env }>();
 // 配置 CORS
 app.use('/api/v1/*', cors());
 
-const SITE_AUTH_COOKIE = 'cunmail_site_auth';
+const SITE_AUTH_COOKIE = '7mail_site_auth';
 
 function isTurnstileEnabled(env: Env): boolean {
   return Boolean(env.TURNSTILE_KEY && env.TURNSTILE_SECRET);
@@ -357,7 +357,7 @@ api.post('/send', async (c) => {
 // 生成 API Key 的函数
 function generateApiKey(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let key = 'cunmail_';
+  let key = '7mail_';
   for (let i = 0; i < 32; i++) {
     key += chars.charAt(Math.floor(Math.random() * chars.length));
   }

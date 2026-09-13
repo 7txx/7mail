@@ -28,7 +28,7 @@ function App() {
       .catch(() => {
         // 本地开发 fallback：后端没启动时用默认配置，方便预览 UI
         setConfig({
-          emailDomain: ["cunmail.dev"],
+          emailDomain: ["7mail.dev"],
           turnstileKey: "",
           turnstileEnabled: false,
           sitePasswordEnabled: false,
@@ -36,9 +36,8 @@ function App() {
           openApiEnabled: false,
           cookiesSecret: "dev-secret",
           showAff: false,
-          enabledSenders: ["resend"],
           sendChannel: "resend",
-          senderEmail: "no-reply@cunmail.dev",
+          senderEmail: "no-reply@7mail.dev",
           gmailEnabled: false,
         });
       });

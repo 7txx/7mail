@@ -8,15 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@libsql/client':
-        specifier: 0.4.0-pre.7
-        version: 0.4.0-pre.7
-      '@tanstack/react-query':
-        specifier: ^5.90.3
-        version: 5.90.3(react@18.2.0)
-      date-fns:
-        specifier: ^3.6.0
-        version: 3.6.0
       drizzle-orm:
         specifier: ^0.29.5
         version: 0.29.5(@libsql/client@0.4.0-pre.7)(@types/react@18.3.26)(react@18.2.0)
@@ -72,9 +63,6 @@ importers:
       i18next:
         specifier: ^23.10.1
         version: 23.16.8
-      i18next-browser-languagedetector:
-        specifier: ^7.2.0
-        version: 7.2.2
       i18next-http-backend:
         specifier: ^2.5.0
         version: 2.7.3

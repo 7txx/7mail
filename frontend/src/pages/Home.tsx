@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { useTranslation } from "react-i18next";
 import Cookies from "js-cookie";
-import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 import { MailList } from "../components/MailList.tsx";
@@ -154,7 +153,7 @@ export function Home() {
               <button
                 onClick={() => toast.dismiss(toastInstance.id)}
                 className="p-1 rounded-full text-gray-400 hover:bg-slate-700 hover:text-white transition-colors"
-                aria-label="Close">
+                aria-label={t("Close")}>
                 <Close className="h-4 w-4" />
               </button>
             </div>
@@ -192,7 +191,7 @@ export function Home() {
 
   useEffect(() => {
     if (!showPromoModal) {
-      localStorage.setItem("cunmail_promo_shown", "true");
+      localStorage.setItem("7mail_promo_shown", "true");
     }
   }, [showPromoModal]);
 
@@ -397,7 +396,7 @@ export function Home() {
 
   useEffect(() => {
     if (address) {
-      const savedNote = localStorage.getItem(`cunmail_note_${address}`);
+      const savedNote = localStorage.getItem(`7mail_note_${address}`);
       if (savedNote) {
         setMailboxNote(savedNote);
       } else {
@@ -408,7 +407,7 @@ export function Home() {
 
   const handleSaveNote = () => {
     if (address) {
-      localStorage.setItem(`cunmail_note_${address}`, noteInput);
+      localStorage.setItem(`7mail_note_${address}`, noteInput);
       setMailboxNote(noteInput);
       setIsEditingNote(false);
       toast.success("备注已保存");
@@ -509,7 +508,7 @@ export function Home() {
             <div className="relative">
               <div className="flex items-center gap-2 mb-2">
                 <div className="glow-dot" />
-                <span className="text-xs text-cyan-400 font-medium">ONLINE</span>
+                <span className="text-xs text-cyan-400 font-medium">在线</span>
               </div>
               <h1 className="text-2xl font-bold mb-1">
                 <span className="gradient-text">7Mail</span>

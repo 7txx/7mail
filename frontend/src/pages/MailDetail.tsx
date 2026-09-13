@@ -44,7 +44,7 @@ export function MailDetail({ email, onClose }: MailDetailProps) {
             srcDoc={email.html || `<pre>${email.text}</pre>`}
             className="w-full h-[60vh] border-0"
             sandbox="allow-popups allow-popups-to-escape-sandbox"
-            title="Email Content"
+            title={t("Email Content")}
           />
       </div>
     </div>

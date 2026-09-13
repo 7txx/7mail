@@ -1,5 +1,5 @@
 {
-  "name": "vmail",
+  "name": "7mail",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,12 +11,11 @@
     "typecheck": "pnpm --filter frontend run typecheck",
     "deploy": "pnpm build && wrangler deploy",
     "dev": "wrangler dev",
-    "worker:dev": "pnpm --filter worker run dev",
     "frontend:dev": "pnpm --filter frontend run dev",
     "format": "prettier --write ."
   },
   "keywords": [
-    "vmail",
+    "7mail",
     "temp-email",
     "cloudflare-worker"
   ],
@@ -31,9 +30,6 @@
     "wrangler": "^4.111.0"
   },
   "dependencies": {
-    "@libsql/client": "0.4.0-pre.7",
-    "@tanstack/react-query": "^5.90.3",
-    "date-fns": "^3.6.0",
     "drizzle-orm": "^0.29.5",
     "drizzle-zod": "^0.5.1",
     "hono": "^4.5.1",

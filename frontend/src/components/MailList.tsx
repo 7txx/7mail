@@ -15,12 +15,6 @@ import Expand from "./icons/Expand.tsx";
 import { SiteStats } from "./SiteStats.tsx";
 import SendIcon from "./icons/SendIcon.tsx";
 
-const localeMap: Record<string, Locale> = {
-  zh: zhCN,
-  "zh-TW": zhCN,
-  en: enUS,
-};
-
 interface MailListProps {
   emails: Email[];
   isLoading: boolean;
@@ -144,7 +138,7 @@ export function MailList({
                 <div className="text-xs text-slate-500 shrink-0">
                   {formatDistanceToNow(new Date(email.date || email.createdAt), {
                     addSuffix: true,
-                    locale: currentLocale,
+                    locale: zhCN,
                   })}
                 </div>
               </div>
@@ -239,7 +233,7 @@ export function MailList({
               )}
               <button
                 className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:text-slate-600 disabled:hover:bg-transparent transition-all"
-                title="refresh"
+                title={t("Refresh")}
                 onClick={onRefresh}
                 disabled={!isAddressCreated || isFetching}>
                 <RefreshIcon

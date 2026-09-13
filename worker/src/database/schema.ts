@@ -6,7 +6,7 @@ import * as z from "zod";
 export const apiKeys = sqliteTable("api_keys", {
   id: text("id").primaryKey(),
   key: text("key").notNull().unique(),            // API Key 值
-  keyPrefix: text("key_prefix").notNull(),        // Key 前缀用于显示 (如 vmail_xxx...)
+  keyPrefix: text("key_prefix").notNull(),        // Key 前缀用于显示 (如 7mail_xxx...)
   name: text("name"),                             // API Key 名称
   rateLimit: integer("rate_limit").default(100),  // 每分钟请求限制
   isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),

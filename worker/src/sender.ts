@@ -221,7 +221,7 @@ export function appendSenderAttribution(message: OutgoingEmail): string {
 }
 
 export function getProviderSenderName(message: OutgoingEmail): string {
-  return message.senderName ? `${message.senderName} via CunMail` : "CunMail";
+  return message.senderName ? `${message.senderName} via 7Mail` : "7Mail";
 }
 
 export function buildResendPayload(

@@ -64,15 +64,6 @@ export async function verifyTurnstile(
   return response.json();
 }
 
-// feat: 添加获取单封邮件详情的函数
-export async function getEmailById(id: string): Promise<Email> {
-  const response = await fetch(`${API_BASE_URL}/emails/${id}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch email");
-  }
-  return response.json();
-}
-
 // 删除邮件
 // fix: 移除 deleteEmails 函数中的 token 参数
 export async function deleteEmails(ids: string[]): Promise<{ count: number }> {
