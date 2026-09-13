@@ -719,12 +719,16 @@ export default {
       const now = new Date();
 
       // Gmail 无限别名(转发模式):Gmail 自动转发过来的邮件,
-      // 信封收件人是转发地址,但 To 头保留原始别名,按规范化别名入库
+      // 信封收件人是转发地址,但邮件头保留原始别名,按规范化别名入库。
+      // 优先用 Delivered-To 头(最终投递地址,最准确),其次用 To 头里的 gmail 地址
       let messageTo = message.to;
       if (isGmailEnabled(env)) {
-        const gmailRecipient = (mail.to ?? [])
-          .map((a) => a.address)
-          .find((a) => a && isGmailAddress(a));
+        const candidates = [
+          mail.deliveredTo,
+          ...(mail.to ?? []).map((a) => a.address),
+          ...(mail.cc ?? []).map((a) => a.address),
+        ].filter((a): a is string => Boolean(a) && isGmailAddress(a));
+        const gmailRecipient = candidates[0];
         if (gmailRecipient) {
           messageTo = normalizeGmailAlias(gmailRecipient) ?? messageTo;
         }
