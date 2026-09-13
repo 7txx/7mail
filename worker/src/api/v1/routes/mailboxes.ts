@@ -1,3 +1,10 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { Hono } from 'hono';
 import type { Env } from '../../../index';
 import { getD1DB } from '../../../database/db';
@@ -12,10 +19,8 @@ import {
   incrementAddressesCreated,
 } from '../../../database/dao';
 
-// 随机邮箱名称生成（模拟真实用户命名习惯）
 function generateRandomLocalPart(): string {
   const firstNames = [
-    // male
     'james', 'john', 'robert', 'michael', 'william', 'david', 'richard', 'joseph', 'thomas', 'charles',
     'christopher', 'daniel', 'matthew', 'anthony', 'mark', 'donald', 'steven', 'paul', 'andrew', 'joshua',
     'kenneth', 'kevin', 'brian', 'george', 'timothy', 'ronald', 'edward', 'jason', 'jeffrey', 'ryan',
@@ -29,7 +34,6 @@ function generateRandomLocalPart(): string {
     'max', 'miles', 'neil', 'noah', 'oliver', 'pete', 'ray', 'reid', 'ross', 'sean',
     'seth', 'todd', 'troy', 'wade', 'will', 'calvin', 'claude', 'felix', 'floyd', 'glen',
     'grant', 'hank', 'herb', 'homer', 'horace', 'ivan', 'jerome', 'lance', 'lloyd', 'marshall',
-    // female
     'mary', 'patricia', 'jennifer', 'linda', 'barbara', 'elizabeth', 'susan', 'jessica', 'sarah', 'karen',
     'lisa', 'nancy', 'betty', 'margaret', 'sandra', 'ashley', 'emily', 'kimberly', 'donna', 'carol',
     'michelle', 'dorothy', 'amanda', 'melissa', 'deborah', 'stephanie', 'rebecca', 'sharon', 'laura', 'cynthia',
@@ -73,7 +77,6 @@ function generateRandomLocalPart(): string {
   ];
 
   const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-  // 模拟出生年（1960–2005）的两位数后缀，如 84、92、03
   const yearSuffix = (): string => String((Math.floor(Math.random() * 46) + 60) % 100).padStart(2, '0');
   const num2 = (): string => String(Math.floor(Math.random() * 100)).padStart(2, '0');
 
@@ -81,15 +84,14 @@ function generateRandomLocalPart(): string {
   const last = pick(lastNames);
   const f = first[0];
 
-  // 7 种命名模式，随机选取一种
   const patterns: (() => string)[] = [
-    () => `${first}.${last}`,              // john.smith
-    () => `${first}_${last}`,              // john_smith
-    () => `${first}${last}`,               // johnsmith
-    () => `${f}.${last}`,                  // j.smith
-    () => `${f}${last}`,                   // jsmith
-    () => `${first}${num2()}`,             // john84
-    () => `${first}.${last}${yearSuffix()}`, // john.smith92
+    () => `${first}.${last}`,
+    () => `${first}_${last}`,
+    () => `${first}${last}`,
+    () => `${f}.${last}`,
+    () => `${f}${last}`,
+    () => `${first}${num2()}`,
+    () => `${first}.${last}${yearSuffix()}`,
   ];
 
   return pick(patterns)();
@@ -97,7 +99,6 @@ function generateRandomLocalPart(): string {
 
 const mailboxesRouter = new Hono<{ Bindings: Env }>();
 
-// POST /api/v1/mailboxes - 创建邮箱
 mailboxesRouter.post('/', async (c) => {
   const db = getD1DB(c.env.DB);
   const apiKey = c.get('apiKey') as { id: string; rateLimit: number };
@@ -106,10 +107,8 @@ mailboxesRouter.post('/', async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    // 允许空请求体
   }
 
-  // 获取可用域名
   const availableDomains = c.env.EMAIL_DOMAIN ? c.env.EMAIL_DOMAIN.split(',').map(d => d.trim()) : [];
   if (availableDomains.length === 0) {
     return c.json({
@@ -120,7 +119,6 @@ mailboxesRouter.post('/', async (c) => {
     }, 500);
   }
 
-  // 验证域名
   const domain = body.domain || availableDomains[0];
   if (!availableDomains.includes(domain)) {
     return c.json({
@@ -132,12 +130,10 @@ mailboxesRouter.post('/', async (c) => {
     }, 400);
   }
 
-  // 生成邮箱地址
   const localPart = body.localPart || generateRandomLocalPart();
   const address = `${localPart}@${domain}`;
 
-  // 计算过期时间
-  const expiresIn = body.expiresIn || 24 * 60 * 60; // 默认 24 小时
+  const expiresIn = body.expiresIn || 24 * 60 * 60;
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
   const now = new Date();
@@ -153,7 +149,6 @@ mailboxesRouter.post('/', async (c) => {
 
   try {
     await insertMailbox(db, mailbox);
-    // 增加邮箱地址创建计数
     await incrementAddressesCreated(db);
     return c.json({
       data: {
@@ -183,7 +178,6 @@ mailboxesRouter.post('/', async (c) => {
   }
 });
 
-// GET /api/v1/mailboxes/:id - 获取邮箱信息
 mailboxesRouter.get('/:id', async (c) => {
   const db = getD1DB(c.env.DB);
   const apiKey = c.get('apiKey') as { id: string; rateLimit: number };
@@ -199,7 +193,6 @@ mailboxesRouter.get('/:id', async (c) => {
     }, 404);
   }
 
-  // 验证所属关系
   if (mailbox.apiKeyId !== apiKey.id) {
     return c.json({
       error: {
@@ -223,7 +216,6 @@ mailboxesRouter.get('/:id', async (c) => {
   });
 });
 
-// GET /api/v1/mailboxes/:id/messages - 获取收件箱
 mailboxesRouter.get('/:id/messages', async (c) => {
   const db = getD1DB(c.env.DB);
   const apiKey = c.get('apiKey') as { id: string; rateLimit: number };
@@ -239,7 +231,6 @@ mailboxesRouter.get('/:id/messages', async (c) => {
     }, 404);
   }
 
-  // 验证所属关系
   if (mailbox.apiKeyId !== apiKey.id) {
     return c.json({
       error: {
@@ -249,7 +240,6 @@ mailboxesRouter.get('/:id/messages', async (c) => {
     }, 403);
   }
 
-  // 解析分页参数
   const page = Math.max(1, parseInt(c.req.query('page') || '1', 10));
   const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20', 10)));
   const sort = c.req.query('sort') === 'asc' ? 'asc' : 'desc';
@@ -274,7 +264,6 @@ mailboxesRouter.get('/:id/messages', async (c) => {
   });
 });
 
-// GET /api/v1/mailboxes/:id/messages/:messageId - 获取邮件详情
 mailboxesRouter.get('/:id/messages/:messageId', async (c) => {
   const db = getD1DB(c.env.DB);
   const apiKey = c.get('apiKey') as { id: string; rateLimit: number };
@@ -290,7 +279,6 @@ mailboxesRouter.get('/:id/messages/:messageId', async (c) => {
     }, 404);
   }
 
-  // 验证所属关系
   if (mailbox.apiKeyId !== apiKey.id) {
     return c.json({
       error: {
@@ -328,7 +316,6 @@ mailboxesRouter.get('/:id/messages/:messageId', async (c) => {
   });
 });
 
-// DELETE /api/v1/mailboxes/:id/messages/:messageId - 删除邮件
 mailboxesRouter.delete('/:id/messages/:messageId', async (c) => {
   const db = getD1DB(c.env.DB);
   const apiKey = c.get('apiKey') as { id: string; rateLimit: number };
@@ -344,7 +331,6 @@ mailboxesRouter.delete('/:id/messages/:messageId', async (c) => {
     }, 404);
   }
 
-  // 验证所属关系
   if (mailbox.apiKeyId !== apiKey.id) {
     return c.json({
       error: {

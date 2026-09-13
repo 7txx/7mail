@@ -1,12 +1,14 @@
-// refactor: 将导入从 'database' 包更改为本地的类型定义文件
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import type { Email } from "../database_types";
 
 const API_BASE_URL = "/api";
 
-// fix: 移除不再需要的 ApiPayload 接口定义
-
-// 获取邮件列表
-// fix: 移除 getEmails 函数中的 token 参数，因为后端已不再需要它
 export async function getEmails(
   address: string,
   limit: number = 50,
@@ -14,7 +16,6 @@ export async function getEmails(
   const response = await fetch(`${API_BASE_URL}/emails`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // fix: 请求体中只发送 address
     body: JSON.stringify({ address, limit }),
   });
   if (!response.ok) {
@@ -40,7 +41,6 @@ export async function getMailboxMeta(address: string): Promise<MailboxMeta> {
   return response.json();
 }
 
-// feat: 新增函数，用于在创建邮箱前验证人机校验token
 export interface MailboxAuthorizationResponse {
   success: boolean;
   bypassed?: boolean;
@@ -64,13 +64,10 @@ export async function verifyTurnstile(
   return response.json();
 }
 
-// 删除邮件
-// fix: 移除 deleteEmails 函数中的 token 参数
 export async function deleteEmails(ids: string[]): Promise<{ count: number }> {
   const response = await fetch(`${API_BASE_URL}/delete-emails`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // fix: 请求体中只发送 ids
     body: JSON.stringify({ ids }),
   });
   if (!response.ok) {
@@ -79,8 +76,6 @@ export async function deleteEmails(ids: string[]): Promise<{ count: number }> {
   return response.json();
 }
 
-// feat: 添加密码登录函数
-// fix: 移除 token 参数，因为登录流程不再需要人机验证
 export async function loginByPassword(password: string): Promise<{
   address: string;
   mailboxToken?: string;
@@ -114,7 +109,6 @@ export async function refreshMailboxToken(
   return data.mailboxToken;
 }
 
-// 站点统计数据类型
 export interface StatsSnapshot {
   totalAddressesCreated: number;
   totalEmailsReceived: number;
@@ -126,7 +120,6 @@ export interface SiteStats {
   totals: StatsSnapshot;
 }
 
-// 获取站点统计数据
 export async function getSiteStats(): Promise<SiteStats> {
   const response = await fetch(`${API_BASE_URL}/stats`);
   if (!response.ok) {

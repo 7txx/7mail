@@ -1,20 +1,22 @@
+# 7Mail 临时邮箱系统
+# 作者：傲始网络
+# 官网：www.ao-s.cn
+# 公众号：傲始网络
+
 name = "7mail"
 main = "worker/src/index.ts"
 
-# 打包配置
 minify = true
 compatibility_flags = [ "nodejs_compat" ]
 compatibility_date = "2025-03-27"
 keep_vars = true
 
-# 启用 D1 数据库
 [[d1_databases]]
 binding = "DB"
 database_name = "${D1_DATABASE_NAME}"
 database_id = "${D1_DATABASE_ID}"
 migrations_dir = "worker/drizzle"
 
-# 定义环境变量和密钥
 [vars]
 PASSWORD = "${PASSWORD}"
 COOKIES_SECRET = "${COOKIES_SECRET}"
@@ -30,7 +32,6 @@ SHOW_AFF = "${SHOW_AFF}"
 ENABLE_OPENAPI = "false"
 MAILBOX_TOKEN_SECRET = "${MAILBOX_TOKEN_SECRET}"
 
-# Gmail 无限别名(转发模式只需 GMAIL_ENABLED 和 GMAIL_ADDRESS)
 GMAIL_ENABLED = "${GMAIL_ENABLED}"
 GMAIL_ADDRESS = "${GMAIL_ADDRESS}"
 GMAIL_SYNC_ADDRESS = "${GMAIL_SYNC_ADDRESS}"
@@ -38,17 +39,12 @@ GMAIL_CLIENT_ID = "${GMAIL_CLIENT_ID}"
 GMAIL_CLIENT_SECRET = "${GMAIL_CLIENT_SECRET}"
 GMAIL_REFRESH_TOKEN = "${GMAIL_REFRESH_TOKEN}"
 
-
-
-# 配置邮件处理
 [triggers]
 crons = ["0 * * * *"]
 
-# 构建配置
 [build]
 command = "pnpm run build"
 
-# 静态资源配置
 [assets]
 binding = "ASSETS"
 directory = "frontend/build/client"

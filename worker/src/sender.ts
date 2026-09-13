@@ -1,3 +1,10 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { z } from "zod";
 import { createMimeMessage, Mailbox } from "mimetext/browser";
 
@@ -94,7 +101,7 @@ export function getConfiguredSendChannel(env: SenderEnv): SendChannel | null {
     case "mailchannels":
       return env.MAILCHANNELS_API_KEY ? "mailchannels" : null;
     case "cloudflare":
-    case "send_email": // Deprecated compatibility alias.
+    case "send_email":
       return env.SEND_EMAIL ? "cloudflare" : null;
     default:
       return null;

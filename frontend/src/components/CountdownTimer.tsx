@@ -1,3 +1,10 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import ClockIcon from './icons/Clock';
@@ -72,7 +79,7 @@ export function CountdownTimer({ expiryTimestamp, onReset }: CountdownTimerProps
           </button>
         )}
       </div>
-      
+
       {timeLeft.expired ? (
         <div className="mt-2 text-center py-2">
           <span className="text-red-400 text-sm font-medium">{t('Email expired')}</span>

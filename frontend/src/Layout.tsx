@@ -1,3 +1,10 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { Outlet } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -10,7 +17,7 @@ export function Layout() {
       <div className="fixed inset-0 bg-radial-glow pointer-events-none" />
       <div className="fixed top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-      
+
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-1">
@@ -31,7 +38,7 @@ export function Layout() {
           },
           success: {
             iconTheme: {
-              primary: '#22d3ee',
+              primary: '#a855f7',
               secondary: '#0f172a',
             },
           },

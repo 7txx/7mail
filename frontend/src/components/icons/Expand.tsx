@@ -1,4 +1,10 @@
-// feat: 新增 Expand 图标，用于在模态框中打开邮件
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { SVGProps } from "react";
 
 export default function Expand(props: SVGProps<SVGSVGElement>) {

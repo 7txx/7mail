@@ -1,3 +1,10 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import {
   Dispatch,
   SetStateAction,
@@ -5,18 +12,16 @@ import {
   useMemo,
   useState,
 } from "react";
-// fix: 使用具名导入来修复构建错误
 import { Modal } from "./modal";
 import { useTranslation } from "react-i18next";
 import Close from "./icons/Close";
 import toast from "react-hot-toast";
 
-// 定义组件的 props 类型
 interface PasswordModalProps {
   showPasswordModal: boolean;
   setShowPasswordModal: Dispatch<SetStateAction<boolean>>;
-  onLogin: (password: string) => Promise<void>; // feat: 添加 onLogin 回调处理登录逻辑
-  isLoggingIn: boolean; // feat: 添加状态以在 UI 中反映登录过程
+  onLogin: (password: string) => Promise<void>;
+  isLoggingIn: boolean;
 }
 
 export default function PasswordModal({
@@ -26,9 +31,8 @@ export default function PasswordModal({
   isLoggingIn,
 }: PasswordModalProps) {
   const { t } = useTranslation();
-  const [password, setPassword] = useState(""); // 状态：存储输入的密码
+  const [password, setPassword] = useState("");
 
-  // 提交处理器
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) {
@@ -36,13 +40,12 @@ export default function PasswordModal({
       return;
     }
     await onLogin(password);
-    // 登录成功或失败的 toast 提示已在 Home.tsx 中处理
   };
 
   return (
     <Modal showModal={showPasswordModal} setShowModal={setShowPasswordModal} theme="dark">
       <div className="w-full overflow-hidden bg-slate-900/95 backdrop-blur-xl shadow-xl p-4 md:max-w-3xl md:rounded-2xl md:border md:border-slate-700/50">
-        {/* 修复：添加 onPointerDown 事件来阻止拖动事件与点击事件的冲突 */}
+
         <Close
           className="absolute top-4 right-4 h-6 w-6 text-slate-400 hover:text-white cursor-pointer"
           onClick={() => setShowPasswordModal(false)}
@@ -93,11 +96,9 @@ export default function PasswordModal({
   );
 }
 
-// 自定义 Hook，用于管理密码模态框的可见性
 export function usePasswordModal() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  // 使用 useCallback 优化 PasswordModal 组件的创建
   const PasswordModalCallback = useCallback(
     ({ onLogin, isLoggingIn }: Omit<PasswordModalProps, 'showPasswordModal' | 'setShowPasswordModal'>) => {
       return (
@@ -109,7 +110,7 @@ export function usePasswordModal() {
         />
       );
     },
-    [showPasswordModal] // 依赖项
+    [showPasswordModal]
   );
 
   return useMemo(

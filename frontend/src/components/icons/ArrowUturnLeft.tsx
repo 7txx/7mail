@@ -1,5 +1,10 @@
-// 修复：将命名导出 'export function' 改为默认导出 'export default function'
-// 这确保了组件导出方式的一致性，解决了Vite构建过程中的解析错误。
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 export default function ArrowUturnLeft() {
   return (
     <svg

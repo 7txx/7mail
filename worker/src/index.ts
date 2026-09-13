@@ -1,16 +1,20 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { Hono } from 'hono';
 import { serveStatic } from 'hono/cloudflare-workers';
 import { cors } from 'hono/cors';
-// 导入数据库相关的模块
 import { deleteEmails, findEmailById, getEmailsByMessageTo, insertEmail, deleteExpiredEmails, insertApiKey, getSiteStats, incrementEmailsReceived, incrementApiKeysCreated, incrementAddressesCreated, incrementDailyAddressesCreated, incrementDailyEmailsReceived, incrementDailyApiKeysCreated, getMailboxMetaByAddress, incrementAndGetApiRateWindowCount } from './database/dao';
 import { getD1DB } from './database/db';
 import { InsertEmail, insertEmailSchema } from './database/schema';
 import { nanoid } from 'nanoid/non-secure';
 import PostalMime from 'postal-mime';
 import { EmailMessage } from 'cloudflare:email';
-// 导入加解密工具函数
 import { decrypt } from './utils';
-// 导入 Gmail 无限别名支持
 import {
   generateGmailAlias,
   getGmailSyncAddress,
@@ -21,7 +25,6 @@ import {
   normalizeGmailAlias,
   syncGmailForAlias,
 } from './gmail';
-// 导入 v1 API
 import v1Api from './api/v1';
 import { isOpenApiEnabled, requireOpenApi } from './openapi';
 import {
@@ -36,13 +39,10 @@ import {
   verifyMailboxToken,
 } from './sender';
 
-
-// 定义 Cloudflare 绑定和环境变量的类型
 export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
 
-  // 从 wrangler.toml 中传入的环境变量
   EMAIL_DOMAIN: string;
   COOKIES_SECRET: string;
   TURNSTILE_KEY: string;
@@ -59,7 +59,6 @@ export interface Env {
   ENABLE_OPENAPI?: string;
   SEND_CHANNEL?: string;
   SEND_EMAIL?: SendEmail;
-  // Gmail 无限别名相关(转发模式只需 GMAIL_ENABLED 和 GMAIL_ADDRESS)
   GMAIL_ENABLED?: string;
   GMAIL_ADDRESS?: string;
   GMAIL_SYNC_ADDRESS?: string;
@@ -68,10 +67,8 @@ export interface Env {
   GMAIL_REFRESH_TOKEN?: string;
 }
 
-// 初始化 Hono 应用
 const app = new Hono<{ Bindings: Env }>();
 
-// 配置 CORS
 app.use('/api/v1/*', cors());
 
 const SITE_AUTH_COOKIE = '7mail_site_auth';
@@ -131,21 +128,16 @@ function shouldBypassSiteGate(pathname: string): boolean {
   return false;
 }
 
-// fix: 增强请求体验证逻辑。
-// 此前的实现方式在请求体解析失败时会静默处理，导致后续处理流程因缺少数据而返回一个模糊的400错误。
-// 新的实现方式会严格校验请求体，如果解析为JSON失败（例如请求体为空或格式错误），将立即返回一个明确的400错误，从而阻止无效请求继续执行。
 const turnstile = async (c, next) => {
   let body: any;
   try {
     const rawBody = await c.req.text();
     body = rawBody ? JSON.parse(rawBody) : {};
   } catch (e) {
-    // 捕获异常，记录错误日志，并返回一个清晰的错误响应。
     console.error("请求体解析为JSON时出错:", e);
     return c.json({ message: '错误的请求：请求体无效或为空。' }, 400);
   }
 
-  // 将解析后的 body 存入上下文，以便下游处理器直接使用，避免重复解析。
   c.set('parsedBody', body);
 
   if (!isTurnstileEnabled(c.env)) {
@@ -160,8 +152,6 @@ const turnstile = async (c, next) => {
     return c.json({ message: '缺少 turnstile token' }, 400);
   }
 
-  // fix: 切换到 application/x-www-form-urlencoded 格式来发送验证请求。
-  // 这可以提高兼容性，并可能解决由 FormData 编码引起的边界问题。
   const params = new URLSearchParams();
   params.append('secret', c.env.TURNSTILE_SECRET);
   params.append('response', token);
@@ -179,7 +169,6 @@ const turnstile = async (c, next) => {
 
   const data = await res.json();
   if (!data.success) {
-    // feat: 增加详细的错误日志，方便调试
     console.error("Turnstile 验证失败:", data['error-codes']);
     return c.json({ message: 'token 无效' }, 400);
   }
@@ -187,15 +176,11 @@ const turnstile = async (c, next) => {
   await next();
 };
 
-// API 路由组
 const api = app.basePath('/api');
 
-// feat: 新增一个专门用于人机验证的接口。
-// 前端应在生成邮箱地址前先调用此接口。
 api.post('/verify', turnstile, async (c) => {
   const body = c.get('parsedBody') as { domain?: string };
   const domain = body?.domain?.trim().toLowerCase();
-  // Gmail 系域名单独放行:启用 Gmail 别名功能后允许选择 gmail.com/googlemail.com
   const gmailDomainAllowed = Boolean(domain && isGmailEnabled(c.env) && isGmailDomain(domain));
   if (
     !domain ||
@@ -207,7 +192,6 @@ api.post('/verify', turnstile, async (c) => {
     }, 400);
   }
 
-  // Gmail 域名:基于母账号生成随机别名(加点/加号/googlemail 变体)
   const mailbox = gmailDomainAllowed
     ? generateGmailAlias(c.env)
     : `${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}@${domain}`;
@@ -256,7 +240,6 @@ api.post('/mailbox-token/refresh', async (c) => {
   });
 });
 
-// Unified, authenticated email sending endpoint.
 api.post('/send', async (c) => {
   const sendChannel = getConfiguredSendChannel(c.env);
   if (!sendChannel || !c.env.MAILBOX_TOKEN_SECRET || !c.env.SENDER_EMAIL) {
@@ -354,7 +337,6 @@ api.post('/send', async (c) => {
   }
 });
 
-// 生成 API Key 的函数
 function generateApiKey(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let key = '7mail_';
@@ -364,7 +346,6 @@ function generateApiKey(): string {
   return key;
 }
 
-// 创建 API Key 接口（需要 Turnstile 验证）
 api.post('/api-keys', requireOpenApi, turnstile, async (c) => {
   const db = getD1DB(c.env.DB);
   const body = c.get('parsedBody') as { name?: string };
@@ -388,14 +369,12 @@ api.post('/api-keys', requireOpenApi, turnstile, async (c) => {
 
   try {
     await insertApiKey(db, newApiKey);
-    // 增加 API Key 创建计数
     await incrementApiKeysCreated(db);
     await incrementDailyApiKeysCreated(db);
-    // 只返回一次完整的 API Key，之后无法再获取
     return c.json({
       data: {
         id: newApiKey.id,
-        key: apiKey,  // 完整的 API Key，只展示这一次
+        key: apiKey,
         keyPrefix: keyPrefix,
         name: newApiKey.name,
         createdAt: now.toISOString(),
@@ -413,8 +392,6 @@ api.post('/api-keys', requireOpenApi, turnstile, async (c) => {
   }
 });
 
-// fix: 移除获取邮件列表接口的 turnstile 验证。
-// 这个接口现在是公开的，刷新收件箱时可以直接调用，不再需要重复验证。
 api.post('/emails', async (c) => {
   const db = getD1DB(c.env.DB);
   let body: any;
@@ -431,8 +408,6 @@ api.post('/emails', async (c) => {
   }
   const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 50;
 
-  // Gmail 无限别名:邮件按规范化别名入库,查询前先归一化;
-  // 若配置了 OAuth 凭证(API 轮询模式),先从 Gmail API 同步该别名的最新邮件
   let queryAddress = address as string;
   if (isGmailEnabled(c.env) && isGmailAddress(queryAddress)) {
     if (isGmailApiEnabled(c.env)) {
@@ -463,9 +438,6 @@ api.post('/emails/meta', async (c) => {
     return c.json({ message: 'address is required' }, 400);
   }
 
-  // Gmail 无限别名:meta 由前端每 10 秒轮询,在此触发同步(API 轮询模式),
-  // 新邮件入库后 count 变化,前端会自动刷新邮件列表并触发新邮件通知;
-  // 查询同样先归一化,与转发模式入库口径一致
   let metaQueryAddress = address as string;
   if (isGmailEnabled(c.env) && isGmailAddress(metaQueryAddress)) {
     if (isGmailApiEnabled(c.env)) {
@@ -482,12 +454,9 @@ api.post('/emails/meta', async (c) => {
   return c.json(meta);
 });
 
-
-// 获取单封邮件详情
 api.get('/emails/:id', async (c) => {
   const db = getD1DB(c.env.DB);
   const { id } = c.req.param();
-  // 函数调用修正：使用 findEmailById 函数
   const email = await findEmailById(db, id);
   if (!email) {
     return c.json({ message: 'Email not found'}, 404);
@@ -495,7 +464,6 @@ api.get('/emails/:id', async (c) => {
   return c.json(email);
 });
 
-// fix: 删除邮件接口不再需要 turnstile 验证，因为通常这是在已知邮箱上下文中操作的。
 api.post('/delete-emails', async (c) => {
     const db = getD1DB(c.env.DB);
     const body = await c.req.json();
@@ -507,10 +475,7 @@ api.post('/delete-emails', async (c) => {
     return c.json(result);
 });
 
-// 修复：移除登录接口的 turnstile 中间件，使其不再需要人机验证。
 api.post('/login', async (c) => {
-  // const db = getD1DB(c.env.DB); // 数据库连接不再需要用于验证
-  // 修复：由于移除了 turnstile 中间件，现在需要在此处直接解析请求体。
   const body = await c.req.json();
   const password = body?.password;
 
@@ -519,49 +484,29 @@ api.post('/login', async (c) => {
   }
 
   try {
-    // 解密密码以获取邮箱地址
     const address = decrypt(password, c.env.COOKIES_SECRET);
-    
-    // **核心修复**：移除数据库邮件检查逻辑
-    // 不再需要查询数据库中是否存在该地址的邮件
-    // const emails = await getEmailsByMessageTo(db, address);
-    // if (emails.length === 0) {
-      // 如果该地址从未收到过邮件，则视为无效密码
-      // return c.json({ message: 'Invalid password' }, 404);
-    // }
 
-    // 可选：添加一个简单的邮箱地址格式校验，增加健壮性
-    // 例如，检查是否包含 '@' 符号
     if (!address || typeof address !== 'string' || !address.includes('@')) {
         console.error("解密后的地址格式无效:", address);
-        return c.json({ message: 'Invalid password' }, 400); // 地址格式不对也视为密码无效
+        return c.json({ message: 'Invalid password' }, 400);
     }
 
-    // Legacy passwords are client-derived and therefore cannot prove send ownership.
     return c.json({ address });
   } catch (e) {
     console.error("Login error:", e);
-    // 如果解密失败或发生其他错误，返回无效密码错误
     return c.json({ message: 'Invalid password' }, 400);
   }
 });
 
-
-// 前端配置接口
 app.get('/config', (c) => {
-  // feat: 将 emailDomain 拆分为数组以支持多域名
   const emailDomain = c.env.EMAIL_DOMAIN ? c.env.EMAIL_DOMAIN.split(',').map(d => d.trim()) : [];
   const turnstileEnabled = isTurnstileEnabled(c.env);
   const openApiEnabled = isOpenApiEnabled(c.env);
-  // feat: Gmail 无限别名:只有开关打开且存在可用收信域名时才启用
-  // (转发模式需要一个能收邮件的地址,workers.dev 免费域名不支持收邮件,
-  // 所以必须配置 EMAIL_DOMAIN 或 GMAIL_SYNC_ADDRESS)
   const gmailSyncAddress = isGmailEnabled(c.env)
     ? getGmailSyncAddress(c.env, c.env.EMAIL_DOMAIN)
     : '';
   const gmailEnabled = Boolean(gmailSyncAddress) || isGmailApiEnabled(c.env);
 
-  // Gmail 启用时,前端域名下拉只显示 gmail.com,自有域名仅用于后台收信,不暴露给用户
   const frontendDomains = gmailEnabled
     ? ['gmail.com', ...emailDomain.filter((d) => d !== 'gmail.com')]
     : emailDomain;
@@ -570,7 +515,7 @@ app.get('/config', (c) => {
   const enabledSenders = sendChannel ? [sendChannel] : [];
 
   return c.json({
-    emailDomain: frontendDomains, // 返回给前端的域名数组
+    emailDomain: frontendDomains,
     turnstileKey: c.env.TURNSTILE_KEY,
     turnstileEnabled,
     cookiesSecret: c.env.COOKIES_SECRET,
@@ -582,12 +527,10 @@ app.get('/config', (c) => {
     sendChannel: sendChannel || '',
     senderEmail: sendChannel ? c.env.SENDER_EMAIL : '',
     gmailEnabled,
-    // Gmail 转发模式的收信地址(Gmail 后台自动转发到这个地址)
     gmailSyncAddress,
   });
 });
 
-// 发件功能调试接口（只返回各配置是否存在，不暴露实际值）
 app.get('/api/send-debug', (c) => {
   const hasMailboxTokenSecret = Boolean(c.env.MAILBOX_TOKEN_SECRET);
   const hasSenderEmail = Boolean(c.env.SENDER_EMAIL);
@@ -610,8 +553,6 @@ app.get('/api/send-debug', (c) => {
   });
 });
 
-// Gmail 转发模式:查看转发收信地址(gmail-sync@...)收到的最近邮件,
-// 主要用于读取 Gmail 开启自动转发时发来的验证码邮件
 api.get('/gmail/forward-inbox', async (c) => {
   if (!isGmailEnabled(c.env)) {
     return c.json({ message: 'Gmail alias feature is disabled' }, 404);
@@ -631,7 +572,6 @@ api.get('/gmail/forward-inbox', async (c) => {
   });
 });
 
-// 站点统计数据接口（公开）
 api.get('/stats', async (c) => {
   const cache = caches.default;
   const cacheKey = new Request(c.req.url, c.req.raw);
@@ -699,30 +639,19 @@ app.post('/auth/logout', (c) => {
   return c.json({ success: true });
 });
 
-// 挂载 v1 API 路由
 app.route('/api/v1', v1Api);
 
-// 修正: 确保 serveStatic 正确指向静态文件目录
-// Hono v4 中 serveStatic 默认处理根路径，我们需要确保它指向正确的子目录
 app.get('/*', serveStatic({ root: './' }))
 app.get('/assets/*', serveStatic({ root: './' }))
 
-
-// Worker 主处理逻辑
 export default {
-  // 邮件处理逻辑
   async email(message: ForwardableEmail, env: Env, ctx: ExecutionContext) {
     try {
       const db = getD1DB(env.DB);
-      // 将原始邮件流转换为文本
       const raw = await new Response(message.raw).text();
-      // 使用 postal-mime 解析邮件
       const mail = await new PostalMime().parse(raw);
       const now = new Date();
 
-      // Gmail 无限别名(转发模式):Gmail 自动转发过来的邮件,
-      // 信封收件人是转发地址,但邮件头保留原始别名,按规范化别名入库。
-      // 优先用 Delivered-To 头(最终投递地址,最准确),其次用 To 头里的 gmail 地址
       let messageTo = message.to;
       if (isGmailEnabled(env)) {
         const candidates = [
@@ -736,13 +665,11 @@ export default {
         }
       }
 
-      // **关键修复**：显式地从解析结果中映射字段，而不是使用对象展开(...)
-      // 这样可以避免属性覆盖和类型不匹配的问题
       const newEmail: InsertEmail = {
         id: nanoid(),
         messageFrom: message.from,
         messageTo,
-        headers: mail.headers || [], // 确保 headers 存在
+        headers: mail.headers || [],
         from: mail.from,
         sender: mail.sender,
         replyTo: mail.replyTo,
@@ -752,7 +679,7 @@ export default {
         cc: mail.cc,
         bcc: mail.bcc,
         subject: mail.subject,
-        messageId: mail.messageId, // messageId 在数据库中是必需的
+        messageId: mail.messageId,
         inReplyTo: mail.inReplyTo,
         references: mail.references,
         date: mail.date,
@@ -762,23 +689,16 @@ export default {
         updatedAt: now,
       };
 
-      // 验证待插入的数据是否符合 schema
       const email = insertEmailSchema.parse(newEmail);
-      // 插入数据库
       await insertEmail(db, email);
-      // 增加邮件接收计数
       await incrementEmailsReceived(db);
       await incrementDailyEmailsReceived(db);
     } catch (e: any) {
-      // **关键修复**：向 Cloudflare 发出拒绝信号
-      // 当发生任何错误时，调用 message.setReject() 告知 Cloudflare 处理失败。
-      // 这会让 Cloudflare 尝试重新投递邮件，而不是直接删除。
       console.error('处理邮件失败:', e);
       message.setReject(`邮件处理失败: ${e.message}`);
     }
   },
 
-  // HTTP 请求处理逻辑
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
@@ -791,16 +711,12 @@ export default {
       });
     }
 
-    // API 路由
     if (url.pathname.startsWith('/api/') || url.pathname === '/config' || url.pathname.startsWith('/auth/')) {
       return app.fetch(request, env, ctx);
     }
 
-    // 静态资源请求
     const response = await env.ASSETS.fetch(request);
 
-    // SPA 路由回退：如果静态资源返回 404，则返回 index.html
-    // 这样可以支持直接访问 /api-docs 等前端路由
     if (response.status === 404) {
       const indexRequest = new Request(new URL('/', request.url).toString(), request);
       return env.ASSETS.fetch(indexRequest);
@@ -809,12 +725,10 @@ export default {
     return response;
   },
 
-  // 定时任务 (清理过期邮件)
   async scheduled(event, env, ctx) {
       const db = getD1DB(env.DB);
-      // 修复：将清理时间从1小时修改为24小时（1天）
       const oneDayAgo = new Date(Date.now() - 1000 * 60 * 60 * 24);
       await deleteExpiredEmails(db, oneDayAgo);
-      console.log(`已清理 ${oneDayAgo.toISOString()} 之前的过期邮件`); // 添加日志
+      console.log(`已清理 ${oneDayAgo.toISOString()} 之前的过期邮件`);
   },
 };

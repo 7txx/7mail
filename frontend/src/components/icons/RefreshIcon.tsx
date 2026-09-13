@@ -1,6 +1,12 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { SVGProps } from "react";
 
-// 修复：使用原始 Remix 项目中的 SVG，以匹配正确的图标样式
 export default function RefreshIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

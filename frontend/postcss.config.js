@@ -1,10 +1,13 @@
-// PostCSS 配置文件
-// Vite 会自动加载此文件并应用其中的插件
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 export default {
   plugins: {
-    // 集成 Tailwind CSS
     tailwindcss: {},
-    // 自动为 CSS 规则添加浏览器前缀
     autoprefixer: {},
   },
 };

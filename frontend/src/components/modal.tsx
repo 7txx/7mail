@@ -1,24 +1,28 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react';
-// fix: 将具名导入 { useWindowSize } 更改为默认导入 useWindowSize
 import useWindowSize from '../hooks/use-window-size';
 import Leaflet from './leaflet';
 
-// 将默认导出（export default）改为具名导出（export）
 export function Modal({
   children,
   showModal,
   setShowModal,
-  theme = 'light', // 新增：添加 theme 属性，并设置默认值为 'light'
+  theme = 'light',
 }: {
   children: React.ReactNode;
   showModal: boolean;
   setShowModal: Dispatch<SetStateAction<boolean>>;
-  theme?: 'light' | 'dark'; // 新增：定义 theme 属性类型
+  theme?: 'light' | 'dark';
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
   const { isMobile } = useWindowSize();
 
-  // close modal on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -30,7 +34,6 @@ export function Modal({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [modalRef, setShowModal]);
-
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -46,12 +49,8 @@ export function Modal({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onKeyDown]);
 
-  // 修复：在移动端，只有当 showModal 为 true 时才渲染 Leaflet 组件。
-  // 这可以防止它在所有页面加载时都默认弹出。
-  // 同时，添加 showBlur={true} 属性以显示背景遮罩。
   if (isMobile) {
     return showModal ? (
-      // feat: 将 theme 属性传递给 Leaflet 组件
       <Leaflet setShow={setShowModal} showBlur={true} theme={theme}>
         {children}
       </Leaflet>

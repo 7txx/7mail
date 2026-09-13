@@ -1,7 +1,12 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { count, desc, asc, eq, and, inArray, lt, sql } from "drizzle-orm";
-// fix: 将数据库类型从 LibSQLDatabase 更改为 DrizzleD1Database，以匹配 Cloudflare D1
 import { DrizzleD1Database } from "drizzle-orm/d1";
-// refactor: 更新 schema 的导入路径
 import { emails, InsertEmail, apiKeys, InsertApiKey, mailboxes, InsertMailbox, siteStats, SiteStats, dailyStats, DailyStats, apiRateLimits } from "./schema";
 
 export async function insertEmail(db: DrizzleD1Database, email: InsertEmail) {
@@ -20,7 +25,6 @@ export async function getEmails(db: DrizzleD1Database) {
   }
 }
 
-// 函数重命名：将 getEmail 重命名为 findEmailById 以匹配 worker 中的调用
 export async function findEmailById(db: DrizzleD1Database, id: string) {
   try {
     const result = await db
@@ -36,11 +40,6 @@ export async function findEmailById(db: DrizzleD1Database, id: string) {
     return null;
   }
 }
-
-// 该函数已不再需要，因为密码现在是邮箱地址的加密版本
-// export async function getEmailByPassword(db: DrizzleD1Database, id: string) {
-// ...
-// }
 
 export async function getEmailsByMessageTo(
   db: DrizzleD1Database,
@@ -64,7 +63,6 @@ export async function getEmailsByMessageTo(
   }
 }
 
-// 按 messageId + 收件地址查找邮件(Gmail 别名同步去重用)
 export async function findEmailByMessageIdAndTo(
   db: DrizzleD1Database,
   messageId: string,
@@ -125,7 +123,6 @@ export async function getEmailsCount(db: DrizzleD1Database) {
   }
 }
 
-// 新增函数：添加 worker 中缺失的 deleteEmails 函数
 export async function deleteEmails(db: DrizzleD1Database, ids: string[]) {
     if (!ids || ids.length === 0) {
         return { count: 0 };
@@ -139,31 +136,16 @@ export async function deleteEmails(db: DrizzleD1Database, ids: string[]) {
     }
 }
 
-/**
- * 新增函数：根据提供的过期时间删除此时间之前的所有邮件。
- * @param db Drizzle 数据库实例。
- * @param expirationTime 一个 Date 对象，表示过期时间点。
- * @returns 返回一个包含已删除邮件数量的对象，或在出错时返回 { count: 0 }。
- */
 export async function deleteExpiredEmails(db: DrizzleD1Database, expirationTime: Date) {
     try {
-        // 使用Drizzle的lt（小于）操作符来比较createdAt字段和expirationTime
         const result = await db.delete(emails).where(lt(emails.createdAt, expirationTime)).execute();
-        // 返回受影响的行数，即已删除的邮件数量
         return { count: result.rowsAffected };
     } catch (e) {
-        // 如果在删除过程中发生错误，则在控制台打印错误信息
         console.error('清理过期邮件失败:', e);
-        // 并返回一个表示删除数量为0的对象
         return { count: 0 };
     }
 }
 
-// ==================== API Key 相关函数 ====================
-
-/**
- * 通过 API Key 值查找记录
- */
 export async function findApiKeyByKey(db: DrizzleD1Database, key: string) {
   try {
     const result = await db
@@ -178,9 +160,6 @@ export async function findApiKeyByKey(db: DrizzleD1Database, key: string) {
   }
 }
 
-/**
- * 更新 API Key 最后使用时间
- */
 export async function updateApiKeyLastUsed(db: DrizzleD1Database, id: string) {
   try {
     await db
@@ -193,9 +172,6 @@ export async function updateApiKeyLastUsed(db: DrizzleD1Database, id: string) {
   }
 }
 
-/**
- * 创建 API Key
- */
 export async function insertApiKey(db: DrizzleD1Database, apiKey: InsertApiKey) {
   try {
     await db.insert(apiKeys).values(apiKey).execute();
@@ -206,11 +182,6 @@ export async function insertApiKey(db: DrizzleD1Database, apiKey: InsertApiKey) 
   }
 }
 
-// ==================== Mailbox 相关函数 ====================
-
-/**
- * 创建邮箱
- */
 export async function insertMailbox(db: DrizzleD1Database, mailbox: InsertMailbox) {
   try {
     await db.insert(mailboxes).values(mailbox).execute();
@@ -221,9 +192,6 @@ export async function insertMailbox(db: DrizzleD1Database, mailbox: InsertMailbo
   }
 }
 
-/**
- * 通过 ID 查找邮箱
- */
 export async function findMailboxById(db: DrizzleD1Database, id: string) {
   try {
     const result = await db
@@ -238,9 +206,6 @@ export async function findMailboxById(db: DrizzleD1Database, id: string) {
   }
 }
 
-/**
- * 通过邮箱地址查找邮箱
- */
 export async function findMailboxByAddress(db: DrizzleD1Database, address: string) {
   try {
     const result = await db
@@ -255,9 +220,6 @@ export async function findMailboxByAddress(db: DrizzleD1Database, address: strin
   }
 }
 
-/**
- * 获取邮箱的邮件列表（带分页）
- */
 export async function getMailboxMessages(
   db: DrizzleD1Database,
   address: string,
@@ -296,9 +258,6 @@ export async function getMailboxMessages(
   }
 }
 
-/**
- * 获取特定邮箱的特定邮件（验证所属关系）
- */
 export async function findMailboxMessage(
   db: DrizzleD1Database,
   address: string,
@@ -317,9 +276,6 @@ export async function findMailboxMessage(
   }
 }
 
-/**
- * 删除特定邮箱的特定邮件（验证所属关系）
- */
 export async function deleteMailboxMessage(
   db: DrizzleD1Database,
   address: string,
@@ -337,9 +293,6 @@ export async function deleteMailboxMessage(
   }
 }
 
-/**
- * 获取邮箱的邮件数量
- */
 export async function getMailboxMessageCount(
   db: DrizzleD1Database,
   address: string
@@ -357,9 +310,6 @@ export async function getMailboxMessageCount(
   }
 }
 
-/**
- * 删除过期的邮箱
- */
 export async function deleteExpiredMailboxes(db: DrizzleD1Database) {
   try {
     const now = new Date();
@@ -374,13 +324,8 @@ export async function deleteExpiredMailboxes(db: DrizzleD1Database) {
   }
 }
 
-// ==================== Site Stats 相关函数 ====================
-
 const GLOBAL_STATS_ID = 'global';
 
-/**
- * 获取站点统计数据
- */
 export async function getSiteStats(db: DrizzleD1Database): Promise<SiteStats | null> {
   try {
     const result = await db
@@ -395,9 +340,6 @@ export async function getSiteStats(db: DrizzleD1Database): Promise<SiteStats | n
   }
 }
 
-/**
- * 初始化站点统计记录（如果不存在）
- */
 export async function initSiteStats(db: DrizzleD1Database) {
   try {
     const existing = await getSiteStats(db);
@@ -416,9 +358,6 @@ export async function initSiteStats(db: DrizzleD1Database) {
   }
 }
 
-/**
- * 增加邮件接收计数
- */
 export async function incrementEmailsReceived(db: DrizzleD1Database, amount: number = 1) {
   try {
     await initSiteStats(db);
@@ -435,9 +374,6 @@ export async function incrementEmailsReceived(db: DrizzleD1Database, amount: num
   }
 }
 
-/**
- * 增加邮箱地址创建计数
- */
 export async function incrementAddressesCreated(db: DrizzleD1Database, amount: number = 1) {
   try {
     await initSiteStats(db);
@@ -454,9 +390,6 @@ export async function incrementAddressesCreated(db: DrizzleD1Database, amount: n
   }
 }
 
-/**
- * 增加 API Key 创建计数
- */
 export async function incrementApiKeysCreated(db: DrizzleD1Database, amount: number = 1) {
   try {
     await initSiteStats(db);

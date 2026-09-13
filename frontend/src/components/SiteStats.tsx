@@ -1,3 +1,10 @@
+/**
+ * 7Mail 临时邮箱系统
+ * 作者：傲始网络
+ * 官网：www.ao-s.cn
+ * 公众号：傲始网络
+ */
+
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getSiteStats, type SiteStats as SiteStatsType } from "../services/api";
@@ -83,13 +90,13 @@ export function SiteStats() {
         </h2>
         <p className="text-sm text-slate-400">{t("Please create a temporary email address first")}</p>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
         <StatCard
           icon={<UserCircleIcon className="w-5 h-5 text-cyan-400" />}
           label={t("Addresses Created")}
           value={stats.totals.totalAddressesCreated}
-          gradient="#22d3ee, #3b82f6"
+          gradient="#a855f7, #ec4899"
         />
         <StatCard
           icon={<MailIcon className="w-5 h-5 text-green-400" />}
