@@ -560,15 +560,15 @@ app.get('/config', (c) => {
     ? getGmailSyncAddress(c.env, c.env.EMAIL_DOMAIN)
     : '';
   const gmailEnabled = Boolean(gmailSyncAddress) || isGmailApiEnabled(c.env);
-  if (gmailEnabled) {
-    emailDomain.push('gmail.com');
-  }
+
+  // Gmail 启用时,前端域名下拉只显示 gmail.com,自有域名仅用于后台收信,不暴露给用户
+  const frontendDomains = gmailEnabled ? ['gmail.com'] : emailDomain;
 
   const sendChannel = getConfiguredSendChannel(c.env);
   const enabledSenders = sendChannel ? [sendChannel] : [];
 
   return c.json({
-    emailDomain: emailDomain, // 返回域名数组
+    emailDomain: frontendDomains, // 返回给前端的域名数组
     turnstileKey: c.env.TURNSTILE_KEY,
     turnstileEnabled,
     cookiesSecret: c.env.COOKIES_SECRET,
