@@ -22,6 +22,8 @@ import Expand from "./icons/Expand.tsx";
 import { SiteStats } from "./SiteStats.tsx";
 import SendIcon from "./icons/SendIcon.tsx";
 
+const localeMap: Record<string, Locale> = { zh: zhCN };
+
 interface MailListProps {
   emails: Email[];
   isLoading: boolean;
